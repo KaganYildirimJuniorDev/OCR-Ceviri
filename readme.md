@@ -4,7 +4,11 @@ Manifest V3 mimarisi temel alınarak geliştirilmiş; web sayfaları, görseller
 
 ---
 
-> [GÖRSEL ALANI: Eklentinin genel tanıtım görseli veya kullanım senaryolarını içeren demo GIF]
+<img width="400" height="215" alt="(22) Free CCNA _ IPv4 Addressing (Part 1) _ Day 7 _ CCNA 200-301 Complete Course - YouTube - Google Chrome 2026-07-24 09-22-33" src="https://github.com/user-attachments/assets/51562bea-add6-40ca-a825-affba253afa8" />
+<img width="400" height="215" alt="Native API, Technique T1106 - Enterprise _ MITRE ATT CK® - Google Chrome 2026-07-24 09-15-14" src="https://github.com/user-attachments/assets/9cc403ff-dbbc-45aa-ad43-d630d3e3b6c6" />
+<img width="400" height="215" alt="Native API, Technique T1106 - Enterprise _ MITRE ATT CK® - Google Chrome 2026-07-24 09-14-48" src="https://github.com/user-attachments/assets/763b1ee3-6306-405f-9cba-07e84fa35419" />
+<img width="400" height="215" alt="hqdefault jpg (480×360) - Google Chrome 2026-07-24 09-19-14" src="https://github.com/user-attachments/assets/a2aada5c-8ba7-4345-8a0b-d7a5407cb7e9" />
+
 
 ---
 
@@ -22,7 +26,6 @@ Nasıl Çalışır?
 
 Eklenti, istemci tarafında (Client-Side) çalışan çok katmanlı bir işleme mimarisine sahiptir. İletişim, Chrome Extension Manifest V3 standartlarına uygun olarak Service Worker ('background.js') ve Content Script ('content.js') arasında mesajlaşma protokolü ile yürütülür.
 
-> [GÖRSEL ALANI: Sistem çalışma ve mimari akış şeması]
 
 Teknik İşleyiş Adımları
 
@@ -48,7 +51,7 @@ Eklentiyi yerel geliştirme ortamınızda çalıştırmak için aşağıdaki ad�
 Geliştirici Modunda Kurulum (Unpacked Extension)
 
 1. Bu depoyu bilgisayarınıza indirin veya klonlayın:
-   git clone https://github.com/kullanici-adi/ocr-chrome-extension.git
+   git clone https: https://github.com/KaganYildirimJuniorDev/OCR-Ceviri.git
 
 2. Google Chrome tarayıcısını açın ve adres çubuğuna şu adresi yazın:
    chrome://extensions
@@ -65,7 +68,8 @@ Geliştirici Modunda Kurulum (Unpacked Extension)
 
 Nasıl Kullanılır?
 
-> [GÖRSEL ALANI: Eklenti popup arayüzü görseli]
+<img width="321" height="472" alt="image" src="https://github.com/user-attachments/assets/492c0f96-a6fe-4208-a68d-d57804065853" />
+
 
 1. Mod Seçimi ve Dil Ayarı
 - Araç çubuğundaki eklenti simgesine tıklayarak kontrol panelini açın.
@@ -78,7 +82,8 @@ Nasıl Kullanılır?
 
 2. Alan Seçimi ve Çeviri Yapma
 
-> [GÖRSEL ALANI: Ekran üzerinde alan seçimi ve çeviri sonucu önizleme görseli]
+<img width="955" height="716" alt="image" src="https://github.com/user-attachments/assets/f90272e0-baf7-49b8-95ea-a32ca2a716b9" />
+
 
 - Eklenti panelinden Başlat butonuna basın veya klavye kısayolunu kullanın.
 - Ekran üzerinde çevrilmesini istediğiniz alanı fare ile sürükleyerek dikdörtgen içine alın.
@@ -86,7 +91,8 @@ Nasıl Kullanılır?
 
 3. Manga ve Görsel Çevirisi Örneği
 
-> [GÖRSEL ALANI: Manga / Çizgi roman çeviri öncesi me sonrası karşılaştırma görseli]
+<img width="823" height="548" alt="image" src="https://github.com/user-attachments/assets/2b22904b-bd9a-4872-8f02-1843179c3669" />
+
 
 ---
 
