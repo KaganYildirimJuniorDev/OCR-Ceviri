@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "OCR Türkçe & Çoklu Dil Çeviri",
+  "version": "1.0",
+  "description": "Seçtiğiniz alandaki metin ve görselleri algılayıp Türkçe veya istediğiniz dile çevirir.",
+  "author": "auxy",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "OCR Çeviri",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "commands": {
+    "activate_ocr": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Ekran Çeviri Seçimini Başlat"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["style.css", "icon16.png", "icon48.png", "icon128.png", "icon.png"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
