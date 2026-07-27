@@ -24,8 +24,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Ayarları Yükle
   chrome.storage.local.get(["sourceLang", "targetLang", "activeMode", "history"], (res) => {
-    if (res.sourceLang) sourceLangSelect.value = res.sourceLang;
-    if (res.targetLang) targetLangSelect.value = res.targetLang;
+    if (res.sourceLang) {
+      sourceLangSelect.value = res.sourceLang;
+    }
+    if (res.targetLang) {
+      targetLangSelect.value = res.targetLang;
+    }
     const currentMode = res.activeMode || "auto";
     setActiveModeUI(currentMode);
     renderHistory(res.history || []);
@@ -58,8 +62,13 @@ document.addEventListener("DOMContentLoaded", () => {
         b.classList.remove("active");
       }
     });
-    if (startBtnText && modeTexts[mode]) startBtnText.innerText = modeTexts[mode];
-    if (startBtnIcon && modeIcons[mode]) startBtnIcon.innerHTML = modeIcons[mode];
+
+    if (startBtnText && modeTexts[mode]) {
+      startBtnText.innerText = modeTexts[mode];
+    }
+    if (startBtnIcon && modeIcons[mode]) {
+      startBtnIcon.innerHTML = modeIcons[mode];
+    }
   }
 
   // Alan veya Canlı Altyazı Başlat
@@ -79,6 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
       historyList.innerHTML = `<div class="empty-state">Henüz geçmiş kayıt yok.</div>`;
       return;
     }
+
     historyList.innerHTML = items.slice(0, 10).map(item => `
       <div class="history-item">
         <span class="history-orig">${escapeHtml(item.original)}</span>
