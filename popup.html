@@ -22,21 +22,55 @@
 
     <!-- Main Content -->
     <main class="content">
-      <!-- Target Language -->
+
+      <!-- Dil Seçim Satırı -->
       <div class="form-group">
-        <label for="targetLang">Hedef Dil</label>
-        <select id="targetLang" class="custom-select">
-          <option value="tr">Türkçe 🇹🇷</option>
-          <option value="en">İngilizce 🇬🇧</option>
-          <option value="de">Almanca 🇩🇪</option>
-          <option value="fr">Fransızca 🇫🇷</option>
-          <option value="es">İspanyolca 🇪🇸</option>
-          <option value="it">İtalyanca 🇮🇹</option>
-          <option value="ru">Rusça 🇷🇺</option>
-          <option value="ja">Japonca 🇯🇵</option>
-          <option value="ko">Korece 🇰🇷</option>
-          <option value="zh">Çince 🇨🇳</option>
-        </select>
+        <label class="lang-row-label">Çeviri Dilleri</label>
+        <div class="lang-row">
+          <!-- Kaynak Dil -->
+          <div class="lang-col">
+            <span class="lang-col-label">Kaynak</span>
+            <select id="sourceLang" class="custom-select compact-select">
+              <option value="auto">🌐 Otomatik</option>
+              <option value="tr">🇹🇷 Türkçe</option>
+              <option value="en">🇬🇧 İngilizce</option>
+              <option value="de">🇩🇪 Almanca</option>
+              <option value="fr">🇫🇷 Fransızca</option>
+              <option value="es">🇪🇸 İspanyolca</option>
+              <option value="it">🇮🇹 İtalyanca</option>
+              <option value="ru">🇷🇺 Rusça</option>
+              <option value="pt">🇵🇹 Portekizce</option>
+              <option value="nl">🇳🇱 Flemenkçe</option>
+              <option value="pl">🇵🇱 Lehçe</option>
+              <option value="uk">🇺🇦 Ukraynaca</option>
+            </select>
+          </div>
+
+          <!-- Ok -->
+          <div class="lang-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M5 12h14M13 6l6 6-6 6"/>
+            </svg>
+          </div>
+
+          <!-- Hedef Dil -->
+          <div class="lang-col">
+            <span class="lang-col-label">Hedef</span>
+            <select id="targetLang" class="custom-select compact-select">
+              <option value="tr">🇹🇷 Türkçe</option>
+              <option value="en">🇬🇧 İngilizce</option>
+              <option value="de">🇩🇪 Almanca</option>
+              <option value="fr">🇫🇷 Fransızca</option>
+              <option value="es">🇪🇸 İspanyolca</option>
+              <option value="it">🇮🇹 İtalyanca</option>
+              <option value="ru">🇷🇺 Rusça</option>
+              <option value="pt">🇵🇹 Portekizce</option>
+              <option value="nl">🇳🇱 Flemenkçe</option>
+              <option value="pl">🇵🇱 Lehçe</option>
+              <option value="uk">🇺🇦 Ukraynaca</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <!-- Mode Selector -->
