@@ -9,18 +9,6 @@
     "scripting",
     "storage"
   ],
-  "host_permissions": [
-    "http://*/*",
-    "https://*/*"
-  ],
-  "content_scripts": [
-    {
-      "matches": ["http://*/*", "https://*/*"],
-      "js": ["content.js"],
-      "run_at": "document_idle",
-      "all_frames": false
-    }
-  ],
   "background": {
     "service_worker": "background.js"
   },
@@ -49,8 +37,16 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["style.css", "icon16.png", "icon48.png", "icon128.png", "icon.png"],
-      "matches": ["<all_urls>"]
+      "resources": [
+        "style.css",
+        "icon16.png",
+        "icon48.png",
+        "icon128.png",
+        "icon.png"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ]
 }
