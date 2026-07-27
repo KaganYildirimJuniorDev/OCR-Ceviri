@@ -1,6 +1,8 @@
+
 // Varsayılan ayarları ilklendir
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.get(["targetLang", "activeMode", "history"], (res) => {
+  chrome.storage.local.get(["sourceLang", "targetLang", "activeMode", "history"], (res) => {
+    if (!res.sourceLang) chrome.storage.local.set({ sourceLang: "auto" });
     if (!res.targetLang) chrome.storage.local.set({ targetLang: "tr" });
     if (!res.activeMode) chrome.storage.local.set({ activeMode: "auto" });
     if (!res.history) chrome.storage.local.set({ history: [] });
@@ -34,10 +36,10 @@ function triggerOCR(tab) {
         chrome.scripting.insertCSS({
           target: { tabId: tab.id },
           files: ["style.css"]
-        }).catch(() => {});
+        }).catch(() => { });
 
         setTimeout(() => {
-          chrome.tabs.sendMessage(tab.id, { action: "start_selection" }).catch(() => {});
+          chrome.tabs.sendMessage(tab.id, { action: "start_selection" }).catch(() => { });
         }, 150);
       }).catch(err => console.error("Script enjeksiyon hatası:", err));
     }
