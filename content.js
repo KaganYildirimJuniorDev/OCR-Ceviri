@@ -1,120 +1,34 @@
 (function () {
-  if (window.ocrTranslatorContextValid && window.ocrTranslatorContextValid()) {
+  if (window.ocrTranslatorInitialized) {
     return;
   }
-  window.ocrTranslatorContextValid = () => {
-    try {
-      chrome.runtime.getURL("");
-      return true;
-    } catch (e) {
-      return false;
-    }
-  };
+  window.ocrTranslatorInitialized = true;
 
-  let shadowRootAbsolute = null;
-  let rootContainerAbsolute = null;
-  let shadowRootFixed = null;
-  let rootContainerFixed = null;
+  let shadowRoot = null;
+  let rootContainer = null;
   let liveScannerInterval = null;
   let isDragging = false;
   let startX = 0, startY = 0;
   let canvas = null, ctx = null, banner = null;
 
-  // --- ÖNBELLEĞE & YARDIMCILAR ---
-  let miniTranslateBtn = null;
-  let translationCache = {};
-
-  // Bağlamın (context) geçerli olup olmadığını kontrol et ve eski/kopuk scriptleri temizle
-  function checkContext() {
-    try {
-      chrome.runtime.getURL("");
-      return true;
-    } catch (e) {
-      document.removeEventListener("mouseup", handleMouseUp);
-      return false;
-    }
-  }
-
-  // Çeviri önbelleğini storage'dan yükle
-  try {
-    chrome.storage.local.get(["translationCache"], (res) => {
-      if (chrome.runtime.lastError) return;
-      if (res && res.translationCache) translationCache = res.translationCache;
-    });
-  } catch (e) {
-    // Bağlam geçersizse hata fırlatmadan yoksay
-  }
-
-  function handleMouseUp(e) {
-    if (!checkContext()) return;
-    if (window.ocrTranslatorActive) return;
-
-    // Shadow DOM içindeki tıklamaları yoksay
-    if (e.composedPath && e.composedPath().some(el =>
-      el.classList && (
-        el.classList.contains("ocr-translator-root-absolute") ||
-        el.classList.contains("ocr-translator-root-fixed") ||
-        el.classList.contains("ocr-inline-container")
-      )
-    )) return;
-
-    setTimeout(() => {
-      if (!checkContext()) return;
-      const selection = window.getSelection();
-      const text = selection?.toString().trim();
-
-      if (miniTranslateBtn) { miniTranslateBtn.remove(); miniTranslateBtn = null; }
-      if (!text || text.length < 2 || !selection.rangeCount) return;
-
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      if (!rect.width) return;
-
-      showMiniTranslateButton(text, rect.right + window.scrollX, rect.bottom + window.scrollY);
-    }, 50);
-  }
-
-  // Sayfada metin seçildiğinde mini çeviri butonu göster
-  document.addEventListener("mouseup", handleMouseUp);
-
   function initShadowDOM() {
-    if (!checkContext()) return;
-
-    // Absolute Container (for scrolling overlays)
-    rootContainerAbsolute = document.querySelector(".ocr-translator-root-absolute");
-    if (!rootContainerAbsolute) {
-      rootContainerAbsolute = document.createElement("div");
-      rootContainerAbsolute.className = "ocr-translator-root-absolute";
-      shadowRootAbsolute = rootContainerAbsolute.attachShadow({ mode: "open" });
-      document.body.appendChild(rootContainerAbsolute);
+    rootContainer = document.querySelector(".ocr-translator-root");
+    if (!rootContainer) {
+      rootContainer = document.createElement("div");
+      rootContainer.className = "ocr-translator-root";
+      shadowRoot = rootContainer.attachShadow({ mode: "open" });
+      document.body.appendChild(rootContainer);
 
       const styleLink = document.createElement("link");
       styleLink.rel = "stylesheet";
       styleLink.href = chrome.runtime.getURL("style.css");
-      shadowRootAbsolute.appendChild(styleLink);
+      shadowRoot.appendChild(styleLink);
     } else {
-      shadowRootAbsolute = rootContainerAbsolute.shadowRoot;
-    }
-
-    // Fixed Container (for floating overlays, canvas, banner, etc.)
-    rootContainerFixed = document.querySelector(".ocr-translator-root-fixed");
-    if (!rootContainerFixed) {
-      rootContainerFixed = document.createElement("div");
-      rootContainerFixed.className = "ocr-translator-root-fixed";
-      shadowRootFixed = rootContainerFixed.attachShadow({ mode: "open" });
-      document.body.appendChild(rootContainerFixed);
-
-      const styleLink = document.createElement("link");
-      styleLink.rel = "stylesheet";
-      styleLink.href = chrome.runtime.getURL("style.css");
-      shadowRootFixed.appendChild(styleLink);
-    } else {
-      shadowRootFixed = rootContainerFixed.shadowRoot;
+      shadowRoot = rootContainer.shadowRoot;
     }
   }
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (!checkContext()) return;
     if (message.action === "start_selection") {
       chrome.storage.local.get(["activeMode", "targetLang", "sourceLang"], (settings) => {
         const mode = settings.activeMode || "auto";
@@ -145,11 +59,11 @@
     banner = document.createElement("div");
     banner.className = "ocr-instruction-banner";
     banner.innerText = "Lütfen çevirmek istediğiniz alanı fare ile sürükleyin. (ESC ile iptal)";
-    shadowRootFixed.appendChild(banner);
+    shadowRoot.appendChild(banner);
 
     canvas = document.createElement("canvas");
     canvas.className = "ocr-overlay-canvas";
-    shadowRootFixed.appendChild(canvas);
+    shadowRoot.appendChild(canvas);
     ctx = canvas.getContext("2d");
 
     function resizeCanvas() {
@@ -237,7 +151,7 @@
       clearInterval(liveScannerInterval);
       liveScannerInterval = null;
     }
-    const existingBar = shadowRootFixed ? shadowRootFixed.querySelector(".ocr-live-subtitle-bar") : null;
+    const existingBar = shadowRoot ? shadowRoot.querySelector(".ocr-live-subtitle-bar") : null;
     if (existingBar) existingBar.remove();
   }
 
@@ -344,12 +258,12 @@
       stopLiveScanner();
     });
 
-    shadowRootFixed.appendChild(liveBar);
+    shadowRoot.appendChild(liveBar);
   }
 
   function updateLiveSubtitleText(text) {
-    if (!shadowRootFixed) return;
-    const textEl = shadowRootFixed.querySelector(".live-bar-text");
+    if (!shadowRoot) return;
+    const textEl = shadowRoot.querySelector(".live-bar-text");
     if (textEl) {
       textEl.innerText = text;
     }
@@ -357,9 +271,9 @@
 
   // Seçilen Alanı İşle
   async function processSelection(x, y, w, h) {
-    chrome.storage.local.get(["targetLang", "sourceLang", "activeMode"], async (settings) => {
-      const targetLang = settings.targetLang || "tr";
+    chrome.storage.local.get(["sourceLang", "targetLang", "activeMode"], async (settings) => {
       const sourceLang = settings.sourceLang || "auto";
+      const targetLang = settings.targetLang || "tr";
       const activeMode = settings.activeMode || "auto";
 
       const loaderCard = showLoader(x, y, w, h);
@@ -583,7 +497,7 @@
         e.stopPropagation();
         card.remove();
       });
-      shadowRootFixed.appendChild(card);
+      shadowRoot.appendChild(card);
     }
   }
 
@@ -612,7 +526,7 @@
       overlay.remove();
     });
 
-    shadowRootAbsolute.appendChild(overlay);
+    shadowRoot.appendChild(overlay);
   }
 
   // 4. Normal Paragraf Katmanı Render
@@ -656,22 +570,16 @@
       overlay.style.color = textColor;
 
       overlay.innerHTML = `
-        <div class="ocr-overlay-topbar">
-          <div class="ocr-overlay-controls">
-            <button class="ocr-mini-btn ocr-tts-btn" title="Sesli Oku">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-            </button>
-            <button class="ocr-mini-btn ocr-copy-btn" title="Kopyala">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-            </button>
-          </div>
+        <div class="ocr-paragraph-body">${escapeHtml(translatedText).replace(/\n/g, "<br>")}</div>
+        <div class="ocr-overlay-controls">
+          <button class="ocr-mini-btn ocr-copy-btn" title="Metni Kopyala">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
           <button class="ocr-paragraph-close" title="Kapat">✕</button>
         </div>
-        <div class="ocr-paragraph-body">${escapeHtml(translatedText).replace(/\n/g, "<br>")}</div>
       `;
 
       setupCopyEvent(overlay, translatedText);
-      setupTTSEvent(overlay, translatedText);
 
       const closeBtn = overlay.querySelector(".ocr-paragraph-close");
       closeBtn.addEventListener("click", (e) => {
@@ -693,31 +601,21 @@
       overlay.style.minHeight = `${rect.height}px`;
 
       overlay.innerHTML = `
-        <div class="ocr-overlay-topbar">
-          <div class="ocr-overlay-controls">
-            <button class="ocr-mini-btn ocr-tts-btn" title="Sesli Oku">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-            </button>
-            <button class="ocr-mini-btn ocr-copy-btn" title="Kopyala">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-            </button>
-            <button class="ocr-mini-btn ocr-pin-btn" title="Sabitle">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17z"/></svg>
-            </button>
-          </div>
+        <div class="ocr-paragraph-body">${escapeHtml(translatedText).replace(/\n/g, "<br>")}</div>
+        <div class="ocr-overlay-controls">
+          <button class="ocr-mini-btn ocr-copy-btn" title="Metni Kopyala">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
           <button class="ocr-paragraph-close" title="Kapat">✕</button>
         </div>
-        <div class="ocr-paragraph-body">${escapeHtml(translatedText).replace(/\n/g, "<br>")}</div>
       `;
 
       setupCopyEvent(overlay, translatedText);
-      setupTTSEvent(overlay, translatedText);
-      setupPinEvent(overlay);
       overlay.querySelector(".ocr-paragraph-close").addEventListener("click", (e) => {
-        e.stopPropagation(); overlay.remove();
+        e.stopPropagation();
+        overlay.remove();
       });
-      makeDraggable(overlay);
-      shadowRootAbsolute.appendChild(overlay);
+      shadowRoot.appendChild(overlay);
     }
   }
 
@@ -746,14 +644,7 @@
       if (!parent) continue;
 
       const tag = parent.tagName.toLowerCase();
-      if (
-        tag === "script" ||
-        tag === "style" ||
-        tag === "noscript" ||
-        parent.closest(".ocr-translator-root-absolute") ||
-        parent.closest(".ocr-translator-root-fixed") ||
-        parent.closest(".ocr-inline-container")
-      ) {
+      if (tag === "script" || tag === "style" || tag === "noscript" || parent.closest(".ocr-translator-root") || parent.closest(".ocr-inline-container")) {
         continue;
       }
 
@@ -868,21 +759,29 @@
     };
   }
 
-  async function runOCR(base64Image, sourceLang = "auto") {
-    // Desteklenen diller (helloworld API key ile çalışanlar)
-    const ocrLangMap = {
-      ru: "rus", de: "ger", fr: "fre", es: "spa",
-      it: "ita", pt: "por", nl: "dut", pl: "pol",
-      tr: "tur", en: "eng", uk: "ukr"
-    };
-    const ocrLang = ocrLangMap[sourceLang] || "eng";
+  const ocrLangMap = {
+    'auto': 'auto',
+    'tr': 'tur',
+    'en': 'eng',
+    'de': 'ger',
+    'fr': 'fre',
+    'es': 'spa',
+    'it': 'ita',
+    'ru': 'rus',
+    'ja': 'jpn',
+    'ko': 'kor',
+    'zh': 'chs'
+  };
 
+  async function runOCR(base64Image, sourceLang = "auto") {
+    const ocrLang = ocrLangMap[sourceLang] || "eng";
     const formData = new FormData();
     formData.append("apikey", "helloworld");
     formData.append("language", ocrLang);
+    if (ocrLang === 'auto') {
+      formData.append("OCREngine", "2");
+    }
     formData.append("isOverlayRequired", "false");
-    formData.append("scale", "true");
-    formData.append("OCREngine", "1");
     formData.append("base64Image", base64Image);
 
     const res = await fetch("https://api.ocr.space/parse/image", {
@@ -894,12 +793,8 @@
     if (data && data.ParsedResults && data.ParsedResults[0]) {
       return data.ParsedResults[0].ParsedText;
     }
-    if (data && data.ErrorMessage) {
-      throw new Error("OCR Hata: " + (Array.isArray(data.ErrorMessage) ? data.ErrorMessage[0] : data.ErrorMessage));
-    }
     throw new Error("OCR servisinden yanıt alınamadı.");
   }
-
 
   async function fetchDictionaryData(word) {
     try {
@@ -913,51 +808,24 @@
   }
 
   async function translateText(text, targetLang = "tr", sourceLang = "auto") {
-    // Önbellekte var mı kontrol et
-    const cacheKey = `${sourceLang}|${targetLang}|${text}`;
-    if (translationCache[cacheKey]) return translationCache[cacheKey];
-
-    const sl = sourceLang || "auto";
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
     const res = await fetch(url);
     const data = await res.json();
     if (data && data[0]) {
-      const result = data[0].map(item => item[0]).join("");
-      // Önbelleğe ekle (max 100 giriş)
-      translationCache[cacheKey] = result;
-      const keys = Object.keys(translationCache);
-      if (keys.length > 100) delete translationCache[keys[0]];
-
-      try {
-        chrome.storage.local.set({ translationCache });
-      } catch (e) {
-        // Bağlam geçersizse yoksay
-      }
-
-      return result;
+      return data[0].map(item => item[0]).join("");
     }
     throw new Error("Çeviri başarısız oldu.");
   }
 
   function saveToHistory(original, translated) {
     if (!original || !translated) return;
-    try {
-      chrome.storage.local.get(["history"], (res) => {
-        if (chrome.runtime.lastError) return;
-        const history = res.history || [];
-        if (history.length > 0 && history[0].original === original) return;
-        history.unshift({ original, translated, time: Date.now() });
-        if (history.length > 30) history.pop();
-
-        try {
-          chrome.storage.local.set({ history });
-        } catch (e) {
-          // Bağlam geçersizse yoksay
-        }
-      });
-    } catch (e) {
-      // Bağlam geçersizse yoksay
-    }
+    chrome.storage.local.get(["history"], (res) => {
+      const history = res.history || [];
+      if (history.length > 0 && history[0].original === original) return;
+      history.unshift({ original, translated, time: Date.now() });
+      if (history.length > 30) history.pop();
+      chrome.storage.local.set({ history });
+    });
   }
 
   function showLoader(x, y, w, h) {
@@ -975,7 +843,7 @@
         <span>İşleniyor ve çevriliyor...</span>
       </div>
     `;
-    shadowRootFixed.appendChild(loader);
+    shadowRoot.appendChild(loader);
     return loader;
   }
 
@@ -997,7 +865,7 @@
     `;
 
     setupCloseEvent(errorCard);
-    shadowRootFixed.appendChild(errorCard);
+    shadowRoot.appendChild(errorCard);
   }
 
   function setupCloseEvent(container) {
@@ -1007,231 +875,6 @@
       e.stopPropagation();
       container.remove();
     });
-  }
-
-  // ============================================================
-  // TTS - Sesli Okuma (browser speechSynthesis, API gerekmez)
-  // ============================================================
-  function speakText(text, lang) {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const langMap = {
-      tr: "tr-TR", en: "en-US", de: "de-DE", fr: "fr-FR",
-      es: "es-ES", it: "it-IT", ru: "ru-RU", pt: "pt-PT",
-      nl: "nl-NL", pl: "pl-PL", uk: "uk-UA"
-    };
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = langMap[lang] || "en-US";
-    utterance.rate = 0.92;
-    window.speechSynthesis.speak(utterance);
-  }
-
-  function setupTTSEvent(container, translatedText) {
-    const ttsBtn = container.querySelector(".ocr-tts-btn");
-    if (!ttsBtn) return;
-    ttsBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      chrome.storage.local.get(["targetLang"], (res) => {
-        speakText(translatedText, res.targetLang || "en");
-      });
-      // Buton animasyonu
-      ttsBtn.style.color = "#3b82f6";
-      ttsBtn.style.opacity = "1";
-      setTimeout(() => { ttsBtn.style.color = ""; ttsBtn.style.opacity = ""; }, 1800);
-    });
-  }
-
-  // ============================================================
-  // PIN - Sayfayı kayarken overlay sabit kalsin (fixed)
-  // ============================================================
-  function setupPinEvent(overlay) {
-    const pinBtn = overlay.querySelector(".ocr-pin-btn");
-    if (!pinBtn) return;
-    let pinned = false;
-
-    pinBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      pinned = !pinned;
-      overlay.classList.toggle("ocr-pinned", pinned);
-
-      const curLeft = parseFloat(overlay.style.left) || 0;
-      const curTop = parseFloat(overlay.style.top) || 0;
-
-      if (pinned) {
-        // absolute (doküman) → fixed (viewport)
-        // Kartı absolute shadowDOM'dan çıkarıp fixed shadowDOM'a taşıyoruz
-        shadowRootFixed.appendChild(overlay);
-
-        overlay.style.left = `${curLeft - window.scrollX}px`;
-        overlay.style.top = `${curTop - window.scrollY}px`;
-
-        pinBtn.title = "Sabiti Çöz";
-      } else {
-        // fixed (viewport) → absolute (doküman)
-        // Kartı fixed shadowDOM'dan çıkarıp absolute shadowDOM'a geri taşıyoruz
-        shadowRootAbsolute.appendChild(overlay);
-
-        overlay.style.left = `${curLeft + window.scrollX}px`;
-        overlay.style.top = `${curTop + window.scrollY}px`;
-
-        pinBtn.title = "Sabitle";
-      }
-    });
-  }
-
-  // ============================================================
-  // SÜRÜKLE - Overlay'i serbestçe taşı
-  // ============================================================
-  function makeDraggable(el) {
-    let dragging = false, mx, my, elLeft, elTop;
-
-    el.style.cursor = "grab";
-
-    el.addEventListener("mousedown", (e) => {
-      if (e.target.closest(".ocr-paragraph-close") ||
-        e.target.closest(".ocr-mini-btn")) return;
-      if (e.button !== 0) return;
-      e.preventDefault();
-      e.stopPropagation();
-
-      dragging = true;
-      mx = e.clientX;
-      my = e.clientY;
-      elLeft = parseFloat(el.style.left) || 0;
-      elTop = parseFloat(el.style.top) || 0;
-      el.style.cursor = "grabbing";
-      el.style.userSelect = "none";
-      el.style.transition = "none";
-
-      const onMove = (e) => {
-        if (!dragging) return;
-        el.style.left = `${elLeft + (e.clientX - mx)}px`;
-        el.style.top = `${elTop + (e.clientY - my)}px`;
-      };
-      const onUp = () => {
-        dragging = false;
-        el.style.cursor = "grab";
-        el.style.userSelect = "";
-        el.style.transition = "";
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onUp);
-      };
-      document.addEventListener("mousemove", onMove);
-      document.addEventListener("mouseup", onUp);
-    });
-  }
-
-  // ============================================================
-  // MİNİ ÇEVİRİ BUTONU - Seçili metni anında çevir
-  // ============================================================
-  function showMiniTranslateButton(selectedText, x, y) {
-    initShadowDOM();
-    if (miniTranslateBtn) miniTranslateBtn.remove();
-
-    // Rect'i ŞİMDİ kaydet — click'te selection temizlenmiş olabilir
-    const sel = window.getSelection();
-    const savedRange = sel && sel.rangeCount ? sel.getRangeAt(0) : null;
-    const savedRect = savedRange ? savedRange.getBoundingClientRect() : null;
-
-    miniTranslateBtn = document.createElement("div");
-    miniTranslateBtn.className = "ocr-mini-translate-pill";
-    miniTranslateBtn.style.cssText = `position:absolute;left:${x}px;top:${y + 6}px;`;
-    miniTranslateBtn.innerHTML = `
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M2 12h20M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/>
-      </svg>
-      <span>Çevir</span>
-    `;
-
-    miniTranslateBtn.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      const btn = miniTranslateBtn;
-      if (btn) {
-        btn.innerHTML = "<span style='font-size:10px'>...</span>";
-        btn.style.pointerEvents = "none";
-      }
-
-      const cleanupPill = () => {
-        if (btn) btn.remove();
-        if (miniTranslateBtn === btn) miniTranslateBtn = null;
-      };
-
-      try {
-        chrome.storage.local.get(["targetLang", "sourceLang"], async (settings) => {
-          try {
-            cleanupPill();
-
-            const targetLang = settings.targetLang || "tr";
-            const sourceLang = settings.sourceLang || "auto";
-
-            // Overlay için sabit genişlik (en az 300px), viewport'un sağına taşmaz
-            const OVERLAY_W = 300;
-            const vpWidth = window.innerWidth;
-            let overlayLeft, overlayTop;
-
-            if (savedRect) {
-              // Seçimin sol kenarı (viewport-relative); viewport'un sağından taşmasın
-              overlayLeft = Math.min(
-                savedRect.left,
-                vpWidth - OVERLAY_W - 16
-              );
-              // Seçimin altına (bottom) konumlan, üstüne değil
-              overlayTop = savedRect.bottom + 8;
-            } else {
-              // Gelen x ve y absolute coordinates idi. Bunları viewport-relative yapıyoruz
-              overlayLeft = Math.min(x - window.scrollX, vpWidth - OVERLAY_W - 16);
-              overlayTop = y - window.scrollY + 8;
-            }
-            overlayLeft = Math.max(overlayLeft, 8);
-
-            const isSingleWord = !selectedText.includes(" ") && selectedText.length > 1;
-
-            if (isSingleWord) {
-              const word = selectedText.replace(/[^\w\s-]/gi, "");
-              const [dictData, translation] = await Promise.all([
-                fetchDictionaryData(word),
-                translateText(word, targetLang, sourceLang)
-              ]);
-              displayDictionaryCard(word, translation, dictData,
-                { left: overlayLeft, top: overlayTop }, null);
-              saveToHistory(word, translation);
-            } else {
-              const translation = await translateText(selectedText, targetLang, sourceLang);
-              displayParagraphOverlay(translation, {
-                left: overlayLeft,
-                top: overlayTop,
-                width: OVERLAY_W,
-                height: 40
-              }, null, selectedText);
-              saveToHistory(selectedText, translation);
-            }
-          } catch (err) {
-            console.error("Mini translate inner error:", err);
-            cleanupPill();
-          }
-        });
-      } catch (err) {
-        console.error("Mini translate outer error:", err);
-        cleanupPill();
-      }
-    });
-
-    // Başka yere tıklanırsa kapat
-    const dismiss = (ev) => {
-      if (miniTranslateBtn) {
-        const isClickInside =
-          (rootContainerAbsolute && rootContainerAbsolute.contains(ev.target)) ||
-          (rootContainerFixed && rootContainerFixed.contains(ev.target));
-        if (!isClickInside) {
-          miniTranslateBtn.remove();
-          miniTranslateBtn = null;
-        }
-      }
-    };
-    document.addEventListener("mousedown", dismiss, { once: true });
-
-    shadowRootAbsolute.appendChild(miniTranslateBtn);
   }
 
   function escapeHtml(str) {
