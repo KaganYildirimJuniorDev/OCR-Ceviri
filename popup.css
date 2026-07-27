@@ -110,6 +110,52 @@ label {
   transition: all 0.2s ease;
 }
 
+/* Compact select for lang-row */
+.compact-select {
+  padding: 8px 8px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+/* Lang Row - side by side source → target */
+.lang-row-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.lang-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.lang-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.lang-col-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.lang-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3b82f6;
+  padding-bottom: 8px;
+  flex-shrink: 0;
+}
+
 .custom-select:hover, .custom-select:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
